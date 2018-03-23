@@ -104,9 +104,9 @@ public class SolarNewsPortletController {
 	 */
 	@RequestMapping("/getApprovar")
 	@ResponseBody
-	public Map<String, Object> getApprovar(HttpServletRequest request,HttpSession session,int firstPage){
+	public Map<String, Object> getApprovar(HttpServletRequest request,HttpSession session,int firstPage,String start,String end){
 		Map<String, Object> map = new HashMap<String, Object>();
-		map = this.solarNewsPortletDao.getApprovar(request,session,firstPage);
+		map = this.solarNewsPortletDao.getApprovar(request,session,firstPage,start,end);
 		
 		return map;
 	}
@@ -173,10 +173,10 @@ public class SolarNewsPortletController {
 	 */
 	@RequestMapping("/getMyDraft")
 	@ResponseBody
-	public Map<String, Object> getMyDraft(HttpServletRequest request,int firstPage,String siteArea){
+	public Map<String, Object> getMyDraft(HttpServletRequest request,int firstPage,String siteArea,String start,String end){
 		Map<String, Object> map = null;
 	 
-			map = this.solarNewsPortletDao.getMyDraftIncludeContentImage(request,firstPage,siteArea);
+			map = this.solarNewsPortletDao.getMyDraftIncludeContentImage(request,firstPage,siteArea,start,end);
 		 
 		
 		return map;

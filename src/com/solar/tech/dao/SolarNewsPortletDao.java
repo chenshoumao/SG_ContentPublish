@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.security.Principal;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -217,10 +218,12 @@ public class SolarNewsPortletDao {
 	 * 读取配置审核页面文件的方法
 	 * 
 	 * @author chenshoumao
+	 * @param end 
+	 * @param start 
 	 * @date 2016年7月15日
 	 */
 	public Map<String, Object> getApprovar(HttpServletRequest request,
-			HttpSession session, int firstPage) {
+			HttpSession session, int firstPage, String start, String end) {
 		Map<String, Object> resultMap = new HashMap<String, Object>();
 		List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
 
@@ -256,7 +259,13 @@ public class SolarNewsPortletDao {
 			String userDN = resource.getString("userDN");
 			query.addSelectors(Selectors.authorsContain("uid="
 					+ currentUser.toString() + "," + userDN));
-
+			SimpleDateFormat sj = new SimpleDateFormat("yyyy-MM-dd");
+			if(!(start == null) && !start.equals("")){
+				query.addSelectors(WorkflowSelectors.generalDateOneAfter(sj.parse(start), true));
+			}
+			if(!(end == null) && !end.equals("")){
+				query.addSelectors(WorkflowSelectors.generalDateOneBefore(sj.parse(end), true));
+			}
 			PageInfo pageInfo = new PageInfo();
 			pageInfo.setCurrentPage(firstPage);
 
@@ -305,15 +314,7 @@ public class SolarNewsPortletDao {
 
 			resultMap.put("data", list);
 
-		} catch (ServiceNotAvailableException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (OperationFailedException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (QueryServiceException e) { // TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (QueryStructureException e) {
+		}catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -1343,7 +1344,8 @@ public class SolarNewsPortletDao {
 			// {"author="+siteAreaContent.getApprover()});
 
 			content.addAuthors(new String[] { siteAreaContent.getApprover() });
-
+			content.setGeneralDateOne(new Date());
+		//	content.setGeneralDateOne(arg0);
 			// 保存内容
 			reulst = wcmspace.save(content);
 			if (null != reulst && reulst.length > 0) {
@@ -1744,18 +1746,18 @@ public class SolarNewsPortletDao {
 	}
 
 	public Map<String, Object> getMyDraftIncludeContentImage(
-			HttpServletRequest request, int firstPage, String siteArea) {
+			HttpServletRequest request, int firstPage, String siteArea, String start, String end) {
 
 		Map<String, Object> contentMap = new HashMap<String, Object>();
 
-		contentMap = this.getMyDraft(request, firstPage, siteArea);
+		contentMap = this.getMyDraft(request, firstPage, siteArea,start,end);
 
 		return contentMap;
 
 	}
 
 	public Map<String, Object> getMyDraft(HttpServletRequest request,
-			int firstPage, String siteArea) {
+			int firstPage, String siteArea, String start, String end) {
 		// TODO Auto-generated method stub
 		Map<String, Object> resultMap = new HashMap<String, Object>();
 		List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
@@ -1794,7 +1796,13 @@ public class SolarNewsPortletDao {
 			query.addSelectors(WorkflowSelectors.stageIn(ll),
 					WorkflowSelectors.statusEquals(Status.DRAFT));
 			query.setSorts(Sorts.byPublishDate(SortDirection.DESCENDING));
-
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+			if(!(start == null) && !start.equals("")){
+				query.addSelectors(WorkflowSelectors.generalDateOneAfter(sdf.parse(start), true));
+			}
+			if(!(end == null) && !end.equals("")){
+				query.addSelectors(WorkflowSelectors.generalDateOneBefore(sdf.parse(end), true));
+			}
 			long sum = queryservice.count(query);
 
 			PageInfo pageInfo = new PageInfo();
@@ -2110,11 +2118,13 @@ public class SolarNewsPortletDao {
 			while (it.hasNext()) {
 				WCMApiObject object = (WCMApiObject) it.next();
 				Content content = (Content) object;
-				if (stage.equals("Review Stage")) {
-					content.removeAuthors(new String[] { currentUser.toString() });
-					content.approve(false, true, comment);
-				} else
+//				if (stage.equals("Review Stage")) {
+//					content.removeAuthors(new String[] { currentUser.toString() });
+//					content.approve(false, true, comment);
+//				} else{
+				content.removeAuthors(new String[] { currentUser.toString() });
 					content.approve(false, false, comment);
+				content.setGeneralDateOne(new Date());
 				map.put("state", true);
 				break;
 			}
@@ -2593,13 +2603,15 @@ public class SolarNewsPortletDao {
 			query.setSorts(Sorts.byDateModified(SortDirection.DESCENDING));
 			ResourceBundle resource = ResourceBundle.getBundle("url");
 			String userDN = resource.getString("userDN");
-			query.addSelectors(Selectors.authorsContain("uid="
+			query.addSelectors(Selectors.ownersContain("uid="
 					+ currentUser.getName() + "," + userDN));
 
 			PageInfo pageInfo = new PageInfo();
 
 			PageIterator<ResultIterator> page = queryservice.execute(query,
 					pageInfo.getPerPage(), firstPage);
+			//it1 存储的是所有的草稿，包括待审核
+			//it2存储的是刚刚创建的草稿 还未提交
 			ResultIterator it1 = null, it2 = null;
 			if (page.hasNext()) {
 				it1 = page.next();
@@ -2625,7 +2637,7 @@ public class SolarNewsPortletDao {
 				}
 			}
 			int index = 0;
-			while (it1.hasNext()) {
+			while (it1 != null && it1.hasNext()) {
 				Map<String, Object> map = new HashMap<String, Object>();
 				WCMApiObject object = (WCMApiObject) it1.next();
 				Content content = (Content) object;
@@ -2743,29 +2755,10 @@ public class SolarNewsPortletDao {
 		return result;
 	}
 	
-	public static void main(String[] args) {
-		String username = "test1";
-		String contentName = "qq";
-		boolean result = false;
-		try {
-			String path = "/root/IBM/greatFolder/";
-			File parentFolder = new File(path);
-			if (!parentFolder.exists())
-				parentFolder.mkdirs();
-			File file = new File(path + contentName);
-			if (!file.exists())
-				file.createNewFile();
-			List<String> list = FileUtils.readLines(file);
-			if(list.contains(username))
-				result = true;
-			else
-			{  
-				FileUtils.writeStringToFile(file, username+"\r", true);
-			}
-			System.out.println(result);	
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	public static void main(String[] args) throws ParseException {
+		ResultIterator it1 = null;
+		while(it1.hasNext())
+			System.out.println(123);
+		 
 	}
 }

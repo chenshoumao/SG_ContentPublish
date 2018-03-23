@@ -2666,7 +2666,7 @@ public class SolarNewsPortletDao {
 		Workspace wcmspace = null;// 声明一个WCM工作空间
 		
 		boolean result = validateContent(currentUser.getName(), contentName);
-		if(!result){
+		if(result){
 			map.put("result", "failed");
 		}
 		else try {

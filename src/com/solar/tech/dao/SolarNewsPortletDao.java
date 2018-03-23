@@ -1401,7 +1401,7 @@ public class SolarNewsPortletDao {
 				for (int i = 0; i < str.length; i++) {
 					ContentComponent contentComponect = content
 							.getComponent(str[i]);
-				 
+
 					if (contentComponect instanceof ShortTextComponent) {
 
 						if (str[i].equals("title")
@@ -1452,17 +1452,15 @@ public class SolarNewsPortletDao {
 					}
 					content.setComponent(str[i], contentComponect);
 				}
-			 
-				 
-				
+
 				String contentApprover = siteAreaContent.getApprover();
-				 
+
 				if (!(contentApprover == null)) {
 					String[] author = content.getAuthors();
-					for(String ss:author){
-						if(!ss.equals(currentUser.getName()))
-							content.removeAuthors(new String[] {ss});
-					} 
+					for (String ss : author) {
+						if (!ss.equals(currentUser.getName()))
+							content.removeAuthors(new String[] { ss });
+					}
 					content.addAuthors(new String[] { siteAreaContent
 							.getApprover() });
 				}
@@ -1681,33 +1679,7 @@ public class SolarNewsPortletDao {
 		return list;
 	}
 
-	public static void main(String[] args) {
-		Map<String, Object> map = new HashMap<String, Object>();
-		map.put("1", 123);
-		map.put("1", 1233);
-		List list = new ArrayList();
-		// list.add(1);
-		// list.add(2);
-		// list.add(3);
-		//
-		// List list2 = new ArrayList();
-		// list2.add(11);
-		// list2.add(22);
-		// // list2.add(33);
-		//
-		// list.addAll(list2);
-
-		list.removeAll(list);
-		System.out.println(list.size());
-		// list2 = list.subList(3, list.size());
-		for (int j = 0; j < list.size(); j++) {
-			System.out.println(list.get(j));
-		}
-		// for (int k = 0; k <= 1 && k < list.size(); k++) {
-		// System.out.println(list.get(k));
-		// }
-		// System.out.println(map.get("1") + "," + map.size());
-	}
+	
 
 	private static Object getFieldValueByName(String fieldName, Object o) {
 		try {
@@ -2128,7 +2100,7 @@ public class SolarNewsPortletDao {
 					+ currentUser.toString() + "," + userDN));
 
 			List<DocumentId> ll = new ArrayList<DocumentId>();
-			
+
 			ll.add(workspace.findByName(DocumentTypes.WorkflowStage, stage)
 					.next());
 			query.addSelectors(WorkflowSelectors.stageIn(ll),
@@ -2666,7 +2638,7 @@ public class SolarNewsPortletDao {
 					map.put("time", transferToDate(content.getCreationDate()));
 					list.add(map);
 				}
-				
+
 			}
 			pageInfo.setSumOfResult(list.size());
 			pageInfo.setCurrentPage(firstPage);
@@ -2682,9 +2654,9 @@ public class SolarNewsPortletDao {
 
 		return resultMap;
 	}
-	
+
 	public Map<String, Object> updateGreat(HttpServletRequest request,
-			 String contentName) {
+			String contentName) {
 		// TODO Auto-generated method stub
 
 		Map<String, Object> map = new HashMap();
@@ -2692,8 +2664,12 @@ public class SolarNewsPortletDao {
 		Principal currentUser = request.getUserPrincipal();
 
 		Workspace wcmspace = null;// 声明一个WCM工作空间
-
-		try {
+		
+		boolean result = validateContent(currentUser.getName(), contentName);
+		if(!result){
+			map.put("result", "failed");
+		}
+		else try {
 			wcmspace = WCMUtils.getWCMWorkspace(currentUser);
 
 			ResourceBundle resourceBundle = ResourceBundle
@@ -2705,7 +2681,7 @@ public class SolarNewsPortletDao {
 
 			wcmspace.setCurrentDocumentLibrary(lib);
 
-			//String contentName = siteAreaContent.getName();
+			// String contentName = siteAreaContent.getName();
 
 			DocumentIdIterator caIdIterator = wcmspace.findByName(
 					DocumentTypes.Content, contentName);
@@ -2716,18 +2692,21 @@ public class SolarNewsPortletDao {
 				Content content = (Content) wcmspace.getById(contentId);
 
 				String[] str = content.getComponentNames();
-				for(int i =0;i<str.length;i++){
-					ContentComponent contentComponent = content.getComponent(str[i]);
-					if(contentComponent instanceof ShortTextComponent){
-						if(str[i].equals("great")){
-							String value = ((ShortTextComponent) contentComponent).getText();
+				for (int i = 0; i < str.length; i++) {
+					ContentComponent contentComponent = content
+							.getComponent(str[i]);
+					if (contentComponent instanceof ShortTextComponent) {
+						if (str[i].equals("great")) {
+							String value = ((ShortTextComponent) contentComponent)
+									.getText();
 							int valueInteger = Integer.parseInt(value);
 							valueInteger++;
-							((ShortTextComponent) contentComponent).setText(String.valueOf(valueInteger));
+							((ShortTextComponent) contentComponent)
+									.setText(String.valueOf(valueInteger));
 						}
 					}
 					content.setComponent(str[i], contentComponent);
-				}	
+				}
 				wcmspace.save(content);
 			}
 		} catch (Exception e) {
@@ -2737,5 +2716,56 @@ public class SolarNewsPortletDao {
 		}
 
 		return map;
+	}
+
+	public boolean validateContent(String username, String contentName) {
+		boolean result = false;
+		try {
+			String path = "/root/IBM/greatFolder/";
+			File parentFolder = new File(path);
+			if (!parentFolder.exists())
+				parentFolder.mkdirs();
+			File file = new File(path + contentName);
+			if (!file.exists())
+				file.createNewFile();
+			List<String> list = FileUtils.readLines(file);
+			if(list.contains(username))
+				result = true;
+			else
+			{  
+				FileUtils.writeStringToFile(file, username+"\r", true);
+			}
+			System.out.println(result);	
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return result;
+	}
+	
+	public static void main(String[] args) {
+		String username = "test1";
+		String contentName = "qq";
+		boolean result = false;
+		try {
+			String path = "/root/IBM/greatFolder/";
+			File parentFolder = new File(path);
+			if (!parentFolder.exists())
+				parentFolder.mkdirs();
+			File file = new File(path + contentName);
+			if (!file.exists())
+				file.createNewFile();
+			List<String> list = FileUtils.readLines(file);
+			if(list.contains(username))
+				result = true;
+			else
+			{  
+				FileUtils.writeStringToFile(file, username+"\r", true);
+			}
+			System.out.println(result);	
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

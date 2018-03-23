@@ -1,5 +1,8 @@
 package com.solar.tech.controller;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,6 +13,7 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,14 +21,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.ibm.workplace.wcm.api.Content;
-import com.ibm.workplace.wcm.api.SiteArea;
-import com.ibm.wps.resolver.servlet.upload.UploadConfig;
-import com.ibm.ws.batch.xJCL.beans.returnCodeExpression;
-import com.solar.tech.bean.Pager;
 import com.solar.tech.bean.SiteAreaContent;
 import com.solar.tech.bean.WorkFlowConfig;
 import com.solar.tech.dao.SolarNewsPortletDao;
@@ -89,12 +85,13 @@ public class SolarNewsPortletController {
 	 */
 	@RequestMapping("/createContent")
 	@ResponseBody
-	public Map<String, Object> CreateContentPage(HttpServletRequest request,MultipartFile file,String selectLib,String area, 
+	public Map<String, Object> CreateContentPage(HttpServletRequest request,MultipartFile file,String area, 
 			SiteAreaContent siteAreaContent){
 		Map<String, Object> map = new HashMap();
-		map = this.solarNewsPortletDao.createContent(request,file,selectLib,area,siteAreaContent);
+		map = this.solarNewsPortletDao.createContent(request,file,area,siteAreaContent);
 		return map;
 	}
+	
 	
 	 
 	 
@@ -129,6 +126,19 @@ public class SolarNewsPortletController {
 		return map;
 	}
 	
+	/**
+	 * 时间 2018/2/21 nextApprover 指定下一个审核人，这个做法是通过改变作者的署名来实现
+	 */
+	
+	@RequestMapping("/nextApprover")
+	@ResponseBody
+	public Map<String, Object> nextApprover(HttpServletRequest request,SiteAreaContent siteAreaContent,String contentName){
+		Map<String, Object> map = new HashMap<String, Object>();
+		map = this.solarNewsPortletDao.nextApprover(request,siteAreaContent,contentName);
+		
+		return map;
+	}
+	
 	
 	/**
 	 * 删除内容
@@ -151,7 +161,7 @@ public class SolarNewsPortletController {
 	@ResponseBody
 	public Map<String, Object> getMyPubulished(HttpServletRequest request,String selectLib,String siteArea,int firstPage){
 		Map<String, Object> map = new HashMap<String, Object>();
-		map = this.solarNewsPortletDao.getMyPubulished(request,selectLib,siteArea,firstPage);
+		map = this.solarNewsPortletDao.getMyPubulishedContent(request,firstPage);
 		
 		return map;
 	}
@@ -189,7 +199,7 @@ public class SolarNewsPortletController {
 	@ResponseBody
 	public Map<String, Object> searchContentByName(HttpServletRequest request,String contentName,String siteArea){
 		Map<String, Object> map = null;
-		map = this.solarNewsPortletDao.searchContentByName(request,contentName,siteArea,"Draft Stage","Draft");
+		map = this.solarNewsPortletDao.searchContentByName(request,contentName,"Draft Stage","Draft");
 		return map;
 	}
 	
@@ -197,7 +207,7 @@ public class SolarNewsPortletController {
 	@ResponseBody
 	public Map<String, Object> getMyPublishContentByName(HttpServletRequest request,String contentName,String siteArea){
 		Map<String, Object> map = null;
-		map = this.solarNewsPortletDao.searchContentByName(request,contentName,siteArea,"Publish Stage","Published");
+		map = this.solarNewsPortletDao.searchContentByName(request,contentName,"Publish Stage","Published");
 		return map;
 	}
 	
@@ -211,7 +221,7 @@ public class SolarNewsPortletController {
 	@ResponseBody
 	public Map<String, Object> getReviewContentByName(HttpServletRequest request,String contentName,String siteArea){
 		Map<String, Object> map = null;
-		map = this.solarNewsPortletDao.searchContentByName(request,contentName,siteArea,"Review Stage","Draft");
+		map = this.solarNewsPortletDao.searchContentByName(request,contentName,"Review Stage","Draft");
 		return map;
 	}
 	
@@ -230,9 +240,23 @@ public class SolarNewsPortletController {
 	 */
 	@RequestMapping("/commitContent")
 	@ResponseBody
-	public Map<String, Object> toApprove(HttpServletRequest request,String contentName,String siteArea){
+	public Map<String, Object> toApprove(HttpServletRequest request,String contentName){
 		Map<String, Object> map = null;
-		map = this.solarNewsPortletDao.commitContent(request,contentName,siteArea);
+		map = this.solarNewsPortletDao.commitContent(request,contentName,"Draft Stage","");
+		return map;
+	}
+	
+	/**
+	 *  
+	 * @author chenshoumao
+	 * @time 2018-02-21
+	 * 发布内容
+	 */
+	@RequestMapping("/publishContent")
+	@ResponseBody
+	public Map<String, Object> publishContent(HttpServletRequest request,String contentName,String comment){
+		Map<String, Object> map = null;
+		map = this.solarNewsPortletDao.commitContent(request,contentName,"Review Stage",comment);
 		return map;
 	}
 	
@@ -286,9 +310,45 @@ public class SolarNewsPortletController {
 		//返回结果
 		return list;
 	}
+	 
+
+	/**
+	 * 时间 2018/2/20 getJson 获取的是当前处理人 对于审批流程的下一步操作， 有无 发布权限 或者 下一步的可选择对象的集合
+	 */
 	
+	@RequestMapping("/getApprovalJson")
+	@ResponseBody
+	public Map<String, Object> getApprovalJson(HttpServletRequest request){
+		 return this.solarNewsPortletDao.getJson(request);
+	}
 	
+
+	/**
+	 * 2018/02/21
+	 * 获取当前审核人
+	 */
+	@RequestMapping("/getCurrentApprover")
+	@ResponseBody
+	public Map<String, Object> getCurrentApprover(HttpServletRequest request,int firstPage){
+		 return this.solarNewsPortletDao.getCurrentApprover(request,firstPage);
+	}
 	
+	/**
+	 * 2018/03/20
+	 *dianzan
+	 */
+	@RequestMapping("/updateGreat")
+	@ResponseBody
+	public Map<String, Object> updateGreat(HttpServletRequest request,String contentName){
+		Map<String, Object> map = null;
+		map = this.solarNewsPortletDao.updateGreat(request,contentName);
+		return map;
+	}
 	
+	@RequestMapping("/test")
+	@ResponseBody
+	public String test(){
+		return "hello";
+	}
 	 
 }

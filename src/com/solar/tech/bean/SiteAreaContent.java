@@ -3,21 +3,17 @@ package com.solar.tech.bean;
 public class SiteAreaContent {
 	public String name;//内容在wcm中的标识
 	
-	public String title;// 标题
-	public String title2;// 详细标题
-	 
-	public String number;
+	public String title;// 标题 
 	public String source;
-	public String content;
-	public String summary;
-	public String workflow;
+	public String editor;//文字编辑者
+	public String imageFrom;// 图片来源
+	public int isImportant;//是否重要新闻
 	
-	
+	public String content; 
+	public String workflow; 
 	private String touzi_categoryName;   //投资的类别
-	private String zhaopin_categoryName; //招聘的类别
-	
-	private String office;
-	private String PhoneNumber;
+	private String zhaopin_categoryName; //招聘的类别 
+	private String approver; //审核人
 	
 	private int stick;//是否置顶 0 否，1 是
 
@@ -25,21 +21,7 @@ public class SiteAreaContent {
 		return title;
 	}
 
-	public String getOffice() {
-		return office;
-	}
-
-	public void setOffice(String office) {
-		this.office = office;
-	}
-
-	public String getPhoneNumber() {
-		return PhoneNumber;
-	}
-
-	public void setPhoneNumber(String phoneNumber) {
-		PhoneNumber = phoneNumber;
-	}
+	 
 
 	public void setTitle(String title) {
 		this.title = title;
@@ -61,13 +43,7 @@ public class SiteAreaContent {
 		this.content = content;
 	}
 
-	public String getSummary() {
-		return summary;
-	}
-
-	public void setSummary(String summary) {
-		this.summary = summary;
-	}
+	 
 
 	public String getWorkflow() {
 		return workflow;
@@ -76,25 +52,8 @@ public class SiteAreaContent {
 	public void setWorkflow(String workflow) {
 		this.workflow = workflow;
 	}
-
-	public String getTitle2() {
-		return title2;
-	}
-
-	public void setTitle2(String title2) {
-		this.title2 = title2;
-	}
-
+ 
 	 
-
-	public String getNumber() {
-		return number;
-	}
-
-	public void setNumber(String number) {
-		this.number = number;
-	}
-
 	public String getTouzi_categoryName() {
 		return touzi_categoryName;
 	}
@@ -125,6 +84,50 @@ public class SiteAreaContent {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public String getApprover() {
+		return approver;
+	}
+
+	public void setApprover(String approver) {
+		this.approver = approver;
+	}
+
+
+
+	public String getEditor() {
+		return editor;
+	}
+
+
+
+	public void setEditor(String editor) {
+		this.editor = editor;
+	}
+
+
+
+	public String getImageFrom() {
+		return imageFrom;
+	}
+
+
+
+	public void setImageFrom(String imageFrom) {
+		this.imageFrom = imageFrom;
+	}
+
+
+
+	public int getIsImportant() {
+		return isImportant;
+	}
+
+
+
+	public void setIsImportant(int isImportant) {
+		this.isImportant = isImportant;
 	}
 	
 }

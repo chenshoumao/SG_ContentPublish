@@ -159,9 +159,9 @@ public class SolarNewsPortletController {
 	 */
 	@RequestMapping("/getMyPubulished")
 	@ResponseBody
-	public Map<String, Object> getMyPubulished(HttpServletRequest request,String selectLib,String siteArea,int firstPage){
+	public Map<String, Object> getMyPubulished(HttpServletRequest request,String selectLib,String siteArea,int firstPage,String start,String end){
 		Map<String, Object> map = new HashMap<String, Object>();
-		map = this.solarNewsPortletDao.getMyPubulishedContent(request,firstPage);
+		map = this.solarNewsPortletDao.getMyPubulishedContent(request,firstPage,start,end);
 		
 		return map;
 	}

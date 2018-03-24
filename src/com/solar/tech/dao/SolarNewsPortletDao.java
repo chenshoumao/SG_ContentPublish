@@ -1873,7 +1873,7 @@ public class SolarNewsPortletDao {
 	}
 
 	public Map<String, Object> getMyPubulishedContent(
-			HttpServletRequest request, int firstPage) {
+			HttpServletRequest request, int firstPage, String start, String end) {
 		// TODO Auto-generated method stub
 		Map<String, Object> resultMap = new HashMap<String, Object>();
 		List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
@@ -1902,6 +1902,13 @@ public class SolarNewsPortletDao {
 			String userDN = resource.getString("userDN");
 			query.addSelectors(Selectors.authorsContain("uid="
 					+ currentUser.getName() + "," + userDN));
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+			if(!(start == null) && !start.equals("")){
+				query.addSelectors(WorkflowSelectors.generalDateOneAfter(sdf.parse(start), true));
+			}
+			if(!(end == null) && !end.equals("")){
+				query.addSelectors(WorkflowSelectors.generalDateOneBefore(sdf.parse(end), true));
+			}
 			long sum = queryservice.count(query);
 
 			PageInfo pageInfo = new PageInfo();

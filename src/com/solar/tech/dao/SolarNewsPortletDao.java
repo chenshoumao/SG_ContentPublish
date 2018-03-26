@@ -307,11 +307,12 @@ public class SolarNewsPortletDao {
 									+ content.getId().getId());
 					list.add(map);
 				}
-				resultMap.put("code", 0);
-				resultMap.put("msg", "");
-				resultMap.put("count", pageInfo.getPageSum());
+				
+				
 			}
-
+			resultMap.put("code", 0);
+			resultMap.put("msg", "");
+			resultMap.put("count", pageInfo.getPageSum());
 			resultMap.put("data", list);
 
 		}catch (Exception e) {
@@ -1796,12 +1797,12 @@ public class SolarNewsPortletDao {
 			query.addSelectors(WorkflowSelectors.stageIn(ll),
 					WorkflowSelectors.statusEquals(Status.DRAFT));
 			query.setSorts(Sorts.byPublishDate(SortDirection.DESCENDING));
-			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-			if(!(start == null) && !start.equals("")){
-				query.addSelectors(WorkflowSelectors.generalDateOneAfter(sdf.parse(start), true));
+			SimpleDateFormat sj = new SimpleDateFormat("yyyy-MM-dd");
+			if(!(start == null) &&!start.equals("")){
+				query.addSelector(WorkflowSelectors.generalDateOneAfter(sj.parse(start), true));
 			}
-			if(!(end == null) && !end.equals("")){
-				query.addSelectors(WorkflowSelectors.generalDateOneBefore(sdf.parse(end), true));
+			if(!(end == null) &&!end.equals("")){
+				query.addSelector(WorkflowSelectors.generalDateOneAfter(sj.parse(end), true));
 			}
 			long sum = queryservice.count(query);
 
@@ -2130,8 +2131,8 @@ public class SolarNewsPortletDao {
 //					content.approve(false, true, comment);
 //				} else{
 				content.removeAuthors(new String[] { currentUser.toString() });
-					content.approve(false, false, comment);
-				content.setGeneralDateOne(new Date());
+				content.approve(false, false, comment);
+				//content.setGeneralDateOne(new Date());
 				map.put("state", true);
 				break;
 			}
@@ -2588,7 +2589,7 @@ public class SolarNewsPortletDao {
 	}
 
 	public Map<String, Object> getCurrentApprover(HttpServletRequest request,
-			int firstPage) {
+			int firstPage,String start ,String end) {
 		// TODO Auto-generated method stub
 		Map<String, Object> resultMap = new HashMap<String, Object>();
 		List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
@@ -2612,6 +2613,13 @@ public class SolarNewsPortletDao {
 			String userDN = resource.getString("userDN");
 			query.addSelectors(Selectors.ownersContain("uid="
 					+ currentUser.getName() + "," + userDN));
+			SimpleDateFormat sj = new SimpleDateFormat("yyyy-MM-dd");
+			if(!(start == null) && !start.equals("")){
+				query.addSelectors(WorkflowSelectors.generalDateOneAfter(sj.parse(start), true));
+			}
+			if(!(end == null) && !end.equals("")){
+				query.addSelectors(WorkflowSelectors.generalDateOneBefore(sj.parse(end), true));
+			}
 
 			PageInfo pageInfo = new PageInfo();
 

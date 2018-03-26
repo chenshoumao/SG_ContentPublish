@@ -329,8 +329,8 @@ public class SolarNewsPortletController {
 	 */
 	@RequestMapping("/getCurrentApprover")
 	@ResponseBody
-	public Map<String, Object> getCurrentApprover(HttpServletRequest request,int firstPage){
-		 return this.solarNewsPortletDao.getCurrentApprover(request,firstPage);
+	public Map<String, Object> getCurrentApprover(HttpServletRequest request,int firstPage,String start,String end){
+		 return this.solarNewsPortletDao.getCurrentApprover(request,firstPage,start,end);
 	}
 	
 	/**

@@ -218,12 +218,15 @@ public class SolarNewsPortletDao {
 	 * 读取配置审核页面文件的方法
 	 * 
 	 * @author chenshoumao
-	 * @param end 
-	 * @param start 
+	 * @param end
+	 * @param start
+	 * @param limit
+	 * @param page
 	 * @date 2016年7月15日
 	 */
 	public Map<String, Object> getApprovar(HttpServletRequest request,
-			HttpSession session, int firstPage, String start, String end) {
+			HttpSession session, String start, String end, int currentPage,
+			int limit) {
 		Map<String, Object> resultMap = new HashMap<String, Object>();
 		List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
 
@@ -260,24 +263,22 @@ public class SolarNewsPortletDao {
 			query.addSelectors(Selectors.authorsContain("uid="
 					+ currentUser.toString() + "," + userDN));
 			SimpleDateFormat sj = new SimpleDateFormat("yyyy-MM-dd");
-			if(!(start == null) && !start.equals("")){
-				query.addSelectors(WorkflowSelectors.generalDateOneAfter(sj.parse(start), true));
+			if (!(start == null) && !start.equals("")) {
+				query.addSelectors(WorkflowSelectors.generalDateOneAfter(
+						sj.parse(start), true));
 			}
-			if(!(end == null) && !end.equals("")){
-				query.addSelectors(WorkflowSelectors.generalDateOneBefore(sj.parse(end), true));
+			if (!(end == null) && !end.equals("")) {
+				query.addSelectors(WorkflowSelectors.generalDateOneBefore(
+						sj.parse(end), true));
 			}
-			PageInfo pageInfo = new PageInfo();
-			pageInfo.setCurrentPage(firstPage);
 
-			resultMap.put("page", pageInfo);
+			// 先获取所有数据条目
+			long sum = queryservice.count(query);
+			PageIterator<ResultIterator> page = queryservice.execute(query,
+					limit, currentPage);
 
-			PageIterator iterator;
-			iterator = queryservice.execute(query, pageInfo.getPerPage(),
-					firstPage);
-			if (iterator.hasNext()) {
-
-				ResultIterator it = iterator.next();
-				pageInfo.setSumOfResult(it.getSize());
+			if (page.hasNext()) {
+				ResultIterator it = page.next();
 				int index = 0;
 				while (it.hasNext()) {
 					WCMApiObject obj = (WCMApiObject) it.next();
@@ -289,13 +290,8 @@ public class SolarNewsPortletDao {
 					map.put("name", content.getName());
 					map.put("type", "content");
 					map.put("author", content.getOwners()[0]);
-					try {
-						map.put("time",
-								transferToDate(content.getDateEnteredStage()));
-					} catch (PropertyRetrievalException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+					map.put("time",
+							transferToDate(content.getDateEnteredStage()));
 					map.put("read",
 							"/wps/myportal/wcmAuthoring?wcmAuthoringAction=read&docid=com.ibm.workplace.wcm.api.WCM_Conten/"
 									+ content.getId().getId());
@@ -307,15 +303,13 @@ public class SolarNewsPortletDao {
 									+ content.getId().getId());
 					list.add(map);
 				}
-				
-				
-			}
-			resultMap.put("code", 0);
-			resultMap.put("msg", "");
-			resultMap.put("count", pageInfo.getPageSum());
-			resultMap.put("data", list);
+				resultMap.put("code", 0);
+				resultMap.put("msg", "");
+				resultMap.put("count", sum);
 
-		}catch (Exception e) {
+				resultMap.put("data", list);
+			}
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -1346,7 +1340,7 @@ public class SolarNewsPortletDao {
 
 			content.addAuthors(new String[] { siteAreaContent.getApprover() });
 			content.setGeneralDateOne(new Date());
-		//	content.setGeneralDateOne(arg0);
+			// content.setGeneralDateOne(arg0);
 			// 保存内容
 			reulst = wcmspace.save(content);
 			if (null != reulst && reulst.length > 0) {
@@ -1682,8 +1676,6 @@ public class SolarNewsPortletDao {
 		return list;
 	}
 
-	
-
 	private static Object getFieldValueByName(String fieldName, Object o) {
 		try {
 			String firstLetter = fieldName.substring(0, 1).toUpperCase();
@@ -1746,19 +1738,9 @@ public class SolarNewsPortletDao {
 		return group;
 	}
 
-	public Map<String, Object> getMyDraftIncludeContentImage(
-			HttpServletRequest request, int firstPage, String siteArea, String start, String end) {
-
-		Map<String, Object> contentMap = new HashMap<String, Object>();
-
-		contentMap = this.getMyDraft(request, firstPage, siteArea,start,end);
-
-		return contentMap;
-
-	}
-
 	public Map<String, Object> getMyDraft(HttpServletRequest request,
-			int firstPage, String siteArea, String start, String end) {
+			String siteArea, String start, String end, int currentPage,
+			int limit) {
 		// TODO Auto-generated method stub
 		Map<String, Object> resultMap = new HashMap<String, Object>();
 		List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
@@ -1797,23 +1779,20 @@ public class SolarNewsPortletDao {
 			query.addSelectors(WorkflowSelectors.stageIn(ll),
 					WorkflowSelectors.statusEquals(Status.DRAFT));
 			query.setSorts(Sorts.byPublishDate(SortDirection.DESCENDING));
-			SimpleDateFormat sj = new SimpleDateFormat("yyyy-MM-dd");
-			if(!(start == null) &&!start.equals("")){
-				query.addSelector(WorkflowSelectors.generalDateOneAfter(sj.parse(start), true));
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+			if (!(start == null) && !start.equals("")) {
+				query.addSelectors(WorkflowSelectors.generalDateOneAfter(
+						sdf.parse(start), true));
 			}
-			if(!(end == null) &&!end.equals("")){
-				query.addSelector(WorkflowSelectors.generalDateOneAfter(sj.parse(end), true));
+			if (!(end == null) && !end.equals("")) {
+				query.addSelectors(WorkflowSelectors.generalDateOneBefore(
+						sdf.parse(end), true));
 			}
+
 			long sum = queryservice.count(query);
 
-			PageInfo pageInfo = new PageInfo();
-
-			pageInfo.setSumOfResult(sum);
-			pageInfo.setCurrentPage(firstPage);
-			resultMap.put("page", pageInfo);
-
 			PageIterator<ResultIterator> page = queryservice.execute(query,
-					pageInfo.getPerPage(), firstPage);
+					limit, currentPage);
 
 			if (page.hasNext()) {
 				ResultIterator it = page.next();
@@ -1874,7 +1853,7 @@ public class SolarNewsPortletDao {
 	}
 
 	public Map<String, Object> getMyPubulishedContent(
-			HttpServletRequest request, int firstPage, String start, String end) {
+			HttpServletRequest request, int currentPage, int limit) {
 		// TODO Auto-generated method stub
 		Map<String, Object> resultMap = new HashMap<String, Object>();
 		List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
@@ -1903,23 +1882,11 @@ public class SolarNewsPortletDao {
 			String userDN = resource.getString("userDN");
 			query.addSelectors(Selectors.authorsContain("uid="
 					+ currentUser.getName() + "," + userDN));
-			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-			if(!(start == null) && !start.equals("")){
-				query.addSelectors(WorkflowSelectors.generalDateOneAfter(sdf.parse(start), true));
-			}
-			if(!(end == null) && !end.equals("")){
-				query.addSelectors(WorkflowSelectors.generalDateOneBefore(sdf.parse(end), true));
-			}
 			long sum = queryservice.count(query);
-
-			PageInfo pageInfo = new PageInfo();
-
-			pageInfo.setSumOfResult(sum);
-			pageInfo.setCurrentPage(firstPage);
-			resultMap.put("page", pageInfo);
-
+ 
+		 
 			PageIterator<ResultIterator> page = queryservice.execute(query,
-					pageInfo.getPerPage(), firstPage);
+					limit, currentPage);
 			int index = 0;
 			if (page.hasNext()) {
 				ResultIterator it = page.next();
@@ -2126,13 +2093,14 @@ public class SolarNewsPortletDao {
 			while (it.hasNext()) {
 				WCMApiObject object = (WCMApiObject) it.next();
 				Content content = (Content) object;
-//				if (stage.equals("Review Stage")) {
-//					content.removeAuthors(new String[] { currentUser.toString() });
-//					content.approve(false, true, comment);
-//				} else{
+				// if (stage.equals("Review Stage")) {
+				// content.removeAuthors(new String[] { currentUser.toString()
+				// });
+				// content.approve(false, true, comment);
+				// } else{
 				content.removeAuthors(new String[] { currentUser.toString() });
 				content.approve(false, false, comment);
-				//content.setGeneralDateOne(new Date());
+				content.setGeneralDateOne(new Date());
 				map.put("state", true);
 				break;
 			}
@@ -2589,7 +2557,7 @@ public class SolarNewsPortletDao {
 	}
 
 	public Map<String, Object> getCurrentApprover(HttpServletRequest request,
-			int firstPage,String start ,String end) {
+			int currentPage, int limit) {
 		// TODO Auto-generated method stub
 		Map<String, Object> resultMap = new HashMap<String, Object>();
 		List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
@@ -2613,20 +2581,11 @@ public class SolarNewsPortletDao {
 			String userDN = resource.getString("userDN");
 			query.addSelectors(Selectors.ownersContain("uid="
 					+ currentUser.getName() + "," + userDN));
-			SimpleDateFormat sj = new SimpleDateFormat("yyyy-MM-dd");
-			if(!(start == null) && !start.equals("")){
-				query.addSelectors(WorkflowSelectors.generalDateOneAfter(sj.parse(start), true));
-			}
-			if(!(end == null) && !end.equals("")){
-				query.addSelectors(WorkflowSelectors.generalDateOneBefore(sj.parse(end), true));
-			}
-
-			PageInfo pageInfo = new PageInfo();
 
 			PageIterator<ResultIterator> page = queryservice.execute(query,
-					pageInfo.getPerPage(), firstPage);
-			//it1 存储的是所有的草稿，包括待审核
-			//it2存储的是刚刚创建的草稿 还未提交
+					limit, currentPage);
+			// it1 存储的是所有的草稿，包括待审核
+			// it2存储的是刚刚创建的草稿 还未提交
 			ResultIterator it1 = null, it2 = null;
 			if (page.hasNext()) {
 				it1 = page.next();
@@ -2639,7 +2598,7 @@ public class SolarNewsPortletDao {
 					WorkflowSelectors.statusEquals(Status.DRAFT));
 
 			page = queryservice
-					.execute(query, pageInfo.getPerPage(), firstPage);
+					.execute(query, limit, currentPage);
 
 			Map<String, Object> tempMap = new HashMap<>();
 
@@ -2667,9 +2626,7 @@ public class SolarNewsPortletDao {
 				}
 
 			}
-			pageInfo.setSumOfResult(list.size());
-			pageInfo.setCurrentPage(firstPage);
-			resultMap.put("page", pageInfo);
+			 
 			resultMap.put("code", 0);
 			resultMap.put("msg", "");
 			resultMap.put("count", list.size());
@@ -2691,56 +2648,57 @@ public class SolarNewsPortletDao {
 		Principal currentUser = request.getUserPrincipal();
 
 		Workspace wcmspace = null;// 声明一个WCM工作空间
-		
+
 		boolean result = validateContent(currentUser.getName(), contentName);
-		if(result){
+		if (result) {
 			map.put("result", "failed");
-		}
-		else try {
-			wcmspace = WCMUtils.getWCMWorkspace(currentUser);
+		} else
+			try {
+				wcmspace = WCMUtils.getWCMWorkspace(currentUser);
 
-			ResourceBundle resourceBundle = ResourceBundle
-					.getBundle("property");
+				ResourceBundle resourceBundle = ResourceBundle
+						.getBundle("property");
 
-			String libName = resourceBundle.getString("rootLibrary");
+				String libName = resourceBundle.getString("rootLibrary");
 
-			DocumentLibrary lib = WCMUtils.getWCMLibrary(libName, currentUser);
+				DocumentLibrary lib = WCMUtils.getWCMLibrary(libName,
+						currentUser);
 
-			wcmspace.setCurrentDocumentLibrary(lib);
+				wcmspace.setCurrentDocumentLibrary(lib);
 
-			// String contentName = siteAreaContent.getName();
+				// String contentName = siteAreaContent.getName();
 
-			DocumentIdIterator caIdIterator = wcmspace.findByName(
-					DocumentTypes.Content, contentName);
+				DocumentIdIterator caIdIterator = wcmspace.findByName(
+						DocumentTypes.Content, contentName);
 
-			while (caIdIterator.hasNext()) {
-				DocumentId contentId = null;
-				contentId = (DocumentId) caIdIterator.next();
-				Content content = (Content) wcmspace.getById(contentId);
+				while (caIdIterator.hasNext()) {
+					DocumentId contentId = null;
+					contentId = (DocumentId) caIdIterator.next();
+					Content content = (Content) wcmspace.getById(contentId);
 
-				String[] str = content.getComponentNames();
-				for (int i = 0; i < str.length; i++) {
-					ContentComponent contentComponent = content
-							.getComponent(str[i]);
-					if (contentComponent instanceof ShortTextComponent) {
-						if (str[i].equals("great")) {
-							String value = ((ShortTextComponent) contentComponent)
-									.getText();
-							int valueInteger = Integer.parseInt(value);
-							valueInteger++;
-							((ShortTextComponent) contentComponent)
-									.setText(String.valueOf(valueInteger));
+					String[] str = content.getComponentNames();
+					for (int i = 0; i < str.length; i++) {
+						ContentComponent contentComponent = content
+								.getComponent(str[i]);
+						if (contentComponent instanceof ShortTextComponent) {
+							if (str[i].equals("great")) {
+								String value = ((ShortTextComponent) contentComponent)
+										.getText();
+								int valueInteger = Integer.parseInt(value);
+								valueInteger++;
+								((ShortTextComponent) contentComponent)
+										.setText(String.valueOf(valueInteger));
+							}
 						}
+						content.setComponent(str[i], contentComponent);
 					}
-					content.setComponent(str[i], contentComponent);
+					wcmspace.save(content);
 				}
-				wcmspace.save(content);
+			} catch (Exception e) {
+				map.put("result", "failed");
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-		} catch (Exception e) {
-			map.put("result", "failed");
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 
 		return map;
 	}
@@ -2756,24 +2714,23 @@ public class SolarNewsPortletDao {
 			if (!file.exists())
 				file.createNewFile();
 			List<String> list = FileUtils.readLines(file);
-			if(list.contains(username))
+			if (list.contains(username))
 				result = true;
-			else
-			{  
-				FileUtils.writeStringToFile(file, username+"\r", true);
+			else {
+				FileUtils.writeStringToFile(file, username + "\r", true);
 			}
-			System.out.println(result);	
+			System.out.println(result);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return result;
 	}
-	
+
 	public static void main(String[] args) throws ParseException {
 		ResultIterator it1 = null;
-		while(it1.hasNext())
+		while (it1.hasNext())
 			System.out.println(123);
-		 
+
 	}
 }

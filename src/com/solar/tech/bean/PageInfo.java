@@ -4,7 +4,7 @@ import org.aspectj.weaver.patterns.ThisOrTargetAnnotationPointcut;
 import org.hibernate.dialect.Ingres10Dialect;
 
 public class PageInfo {
-	private final int perPage = 3;//每页显示数量
+	private final int perPage = 10;//每页显示数量
 	private long pageSum;    //总页数
 	private int currentPage;//当前页数
 	private long sumOfResult;//数据总数

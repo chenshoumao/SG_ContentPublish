@@ -104,9 +104,9 @@ public class SolarNewsPortletController {
 	 */
 	@RequestMapping("/getApprovar")
 	@ResponseBody
-	public Map<String, Object> getApprovar(HttpServletRequest request,HttpSession session,int firstPage,String start,String end){
+	public Map<String, Object> getApprovar(HttpServletRequest request,HttpSession session,String start,String end,int page,int limit){
 		Map<String, Object> map = new HashMap<String, Object>();
-		map = this.solarNewsPortletDao.getApprovar(request,session,firstPage,start,end);
+		map = this.solarNewsPortletDao.getApprovar(request,session,start,end,page,limit);
 		
 		return map;
 	}
@@ -159,9 +159,9 @@ public class SolarNewsPortletController {
 	 */
 	@RequestMapping("/getMyPubulished")
 	@ResponseBody
-	public Map<String, Object> getMyPubulished(HttpServletRequest request,String selectLib,String siteArea,int firstPage,String start,String end){
+	public Map<String, Object> getMyPubulished(HttpServletRequest request,String selectLib,String siteArea,int page,int limit){
 		Map<String, Object> map = new HashMap<String, Object>();
-		map = this.solarNewsPortletDao.getMyPubulishedContent(request,firstPage,start,end);
+		map = this.solarNewsPortletDao.getMyPubulishedContent(request,page,limit);
 		
 		return map;
 	}
@@ -173,10 +173,10 @@ public class SolarNewsPortletController {
 	 */
 	@RequestMapping("/getMyDraft")
 	@ResponseBody
-	public Map<String, Object> getMyDraft(HttpServletRequest request,int firstPage,String siteArea,String start,String end){
+	public Map<String, Object> getMyDraft(HttpServletRequest request,String siteArea,String start,String end,int page,int limit){
 		Map<String, Object> map = null;
 	 
-			map = this.solarNewsPortletDao.getMyDraftIncludeContentImage(request,firstPage,siteArea,start,end);
+			map = this.solarNewsPortletDao.getMyDraft(request,siteArea,start,end,page,limit);
 		 
 		
 		return map;
@@ -329,8 +329,8 @@ public class SolarNewsPortletController {
 	 */
 	@RequestMapping("/getCurrentApprover")
 	@ResponseBody
-	public Map<String, Object> getCurrentApprover(HttpServletRequest request,int firstPage,String start,String end){
-		 return this.solarNewsPortletDao.getCurrentApprover(request,firstPage,start,end);
+	public Map<String, Object> getCurrentApprover(HttpServletRequest request,int page,int limit){
+		 return this.solarNewsPortletDao.getCurrentApprover(request,page,limit);
 	}
 	
 	/**
